@@ -9,6 +9,7 @@ import database.db_config as db_config
 from utils.helpers import process_csv
 from utils.driver_installer import check_and_install_odbc_driver
 import requests
+from models.ez_sql import open_ez_sql_window
 
 # Check and install ODBC driver if necessary
 if not check_and_install_odbc_driver():
@@ -25,9 +26,14 @@ def center_window(window, width, height):
 
 def find_location_gui():
     # Get the serial number from the input field
-    serial_number = serial_number_var.get()
+    serial_number = serial_number_var.get().strip()  # Strip whitespace
     if not serial_number:
         result_var.set("Please enter a serial number.")
+        return
+
+    # Validate the serial number
+    if not serial_number.isdigit():
+        result_var.set("Invalid serial number. Please enter a numeric value.")
         return
 
     # Connect to the database
@@ -52,7 +58,7 @@ def find_location_gui():
 
 def find_owner_gui():
     # Get the input from the user
-    input_value = serial_number_var.get()
+    input_value = serial_number_var.get().strip()  # Strip whitespace
     if not input_value:
         result_var.set("Please enter a serial number or user ID.")
         return
@@ -91,7 +97,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 root = Tk()
 root.title("Lockbox Finder")
 root.configure(bg="#f0f0f0")  # Set background color
-center_window(root, 400, 300)  # Center the window
+center_window(root, 400, 400)  # Center the window
 
 # Force the window to open in the foreground
 root.attributes('-topmost', True)
@@ -118,6 +124,7 @@ Entry(frame, textvariable=serial_number_var, font=("Arial", 12), width=30).grid(
 Button(frame, text="Find Location", command=find_location_gui, font=("Arial", 10), bg="#0078D7", fg="white").grid(row=2, column=0, padx=5, pady=10)
 Button(frame, text="Find Owner", command=find_owner_gui, font=("Arial", 10), bg="#0078D7", fg="white").grid(row=2, column=1, padx=5, pady=10)
 Button(frame, text="Upload CSV", command=lambda: process_csv(db_config, result_var), font=("Arial", 10), bg="#0078D7", fg="white").grid(row=3, column=0, columnspan=2, pady=10)
+Button(frame, text="EZ-SQL", command=lambda: open_ez_sql_window(root), font=("Arial", 10), bg="#0078D7", fg="white").grid(row=4, column=0, columnspan=2, pady=10)
 
 # Label to display the result
 result_var = StringVar()
