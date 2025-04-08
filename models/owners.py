@@ -76,7 +76,9 @@ class Owner:
                 f"User ID: {self.user_id}\n"
                 f"Name: {first_name} {last_name}\n"
                 f"License Number: {license_number}\n"
-                f"Associated Serial Numbers: {serial_numbers}"
+                f"Associated Serial Numbers:\n{serial_numbers.replace(', ', '\n')}"
             )
+        except Exception as e:
+            return f"Error retrieving user and lockbox details: {e}"
         finally:
             cursor.close()

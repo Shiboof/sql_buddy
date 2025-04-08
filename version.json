@@ -1,9 +1,10 @@
 {
-    "version": "1.1.1",
-    "download_url": "https://github.com/Shiboof/sql_buddy/releases/download/v1.1.1/SQL.Buddy.exe",
+    "version": "1.1.2",
+    "download_url": "https://github.com/Shiboof/sql_buddy/releases/download/v1.1.2/SQL.Buddy.exe",
     "changelog": [
-        "Added feature to find owner details and lockboxes.",
-        "Improved database connection error handling.",
+        "Added scroll wheel support for the query result table.",
+        "Added save output to file option.",
+        "Added support for custom SQL functions.",
         "Fixed bugs in CSV processing."
     ]
 }
