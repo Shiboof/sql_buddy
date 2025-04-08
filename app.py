@@ -17,10 +17,13 @@ if not check_and_install_odbc_driver():
 
 def check_for_updates(current_version):
     try:
-        response = requests.get("https://github.com/Shiboof/sql_buddy/blob/main/version.json")
+        response = requests.get("https://raw.githubusercontent.com/Shiboof/sql_buddy/refs/heads/main/version.json")
         if response.status_code == 200:
-            latest_version = response.json().get("version")
-            download_url = response.json().get("download_url")
+            version_data = response.json()
+            latest_version = version_data.get("version")
+            download_url = version_data.get("download_url")
+            changelog = version_data.get("changelog", [])
+
             if latest_version != current_version:
                 print(f"Update available: {latest_version}")
                 print(f"Download it here: {download_url}")
