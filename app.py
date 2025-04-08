@@ -102,6 +102,11 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 root = Tk()
 root.title("Lockbox Finder")
 
+# Force the window to open in the foreground
+root.attributes('-topmost', True)
+root.update()
+root.attributes('-topmost', False)
+
 # Set the Window Icon
 icon_path = os.path.join(BASE_DIR, "assets", "app_icon.ico")
 if os.path.exists(icon_path):
