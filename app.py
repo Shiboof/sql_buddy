@@ -4,6 +4,12 @@ from database.connection import get_connection
 from models.lockbox import Lockbox
 import database.db_config as db_config  # Import the configuration file
 from utils.helpers import process_csv  # Import the refactored function
+from utils.driver_installer import check_and_install_odbc_driver
+
+# Check and install ODBC driver if necessary
+if not check_and_install_odbc_driver():
+    print("Failed to install ODBC Driver. Exiting...")
+    exit(1)
 
 def find_location_gui():
     # Get the serial number from the input field

@@ -24,3 +24,6 @@ database/db_config.py
 # IDE-specific files
 .vscode/
 .idea/
+
+# Driver installer
+/drivers/msodbcsql.msi
