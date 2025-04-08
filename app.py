@@ -27,6 +27,8 @@ def check_for_updates(current_version):
             if latest_version != current_version:
                 print(f"Update available: {latest_version}")
                 print(f"Download it here: {download_url}")
+                print(f"Changelog: {changelog}")
+                # Prompt user to update
             else:
                 print("You are using the latest version.")
         else:
