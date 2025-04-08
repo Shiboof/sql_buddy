@@ -34,12 +34,22 @@ def check_for_updates(current_version):
     except Exception as e:
         print(f"Error checking for updates: {e}")
 
-def find_location_gui():
-    # Get the serial number from the input field
-    serial_number = serial_number_var.get()
-    if not serial_number:
-        result_var.set("Please enter a serial number.")
+def find_owner_gui():
+    # Get the input from the user
+    input_value = serial_number_var.get()
+    if not input_value:
+        result_var.set("Please enter a serial number or user ID.")
         return
+
+    # Initialize variables
+    user_id = None
+    serial_number = None
+
+    # Treat all inputs as strings to avoid overflow errors
+    if input_value.isdigit() and len(input_value) <= 10:  # Adjust length as per your user_id format
+        user_id = input_value  # Treat as user_id
+    else:
+        serial_number = input_value  # Treat as serial_number
 
     # Connect to the database
     try:
@@ -49,24 +59,32 @@ def find_location_gui():
             db_config.username,
             db_config.password
         )
-        lockbox = Lockbox(serial_number)
-        location = lockbox.find_location(connection)
+        owner = Owner(serial_number=serial_number, user_id=user_id)
+        result = owner.find_user_and_lockboxes(connection)
         connection.close()
 
         # Display the result
-        if location:
-            result_var.set(f"Location: {location}")
-        else:
-            result_var.set(f"Lockbox {serial_number} not found.")
+        result_var.set(result)
     except Exception as e:
         result_var.set(f"Error: {e}")
 
 def find_owner_gui():
-    # Get the serial number from the input field
-    serial_number = serial_number_var.get()
-    if not serial_number:
-        result_var.set("Please enter a serial number.")
+    # Get the input from the user
+    input_value = serial_number_var.get()
+    if not input_value:
+        result_var.set("Please enter a serial number or user ID.")
         return
+
+    # Initialize variables
+    user_id = None
+    serial_number = None
+
+    # Determine if the input is a user_id or serial_number
+    # If the input is numeric and matches the expected length of a user_id, treat it as a user_id
+    if input_value.isdigit() and len(input_value) <= 10:  # Adjust length as per your user_id format
+        user_id = input_value
+    else:
+        serial_number = input_value  # Treat as serial_number
 
     # Connect to the database
     try:
@@ -76,7 +94,7 @@ def find_owner_gui():
             db_config.username,
             db_config.password
         )
-        owner = Owner(serial_number)
+        owner = Owner(serial_number=serial_number, user_id=user_id)
         result = owner.find_user_and_lockboxes(connection)
         connection.close()
 

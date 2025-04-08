@@ -6,7 +6,7 @@ def get_connection(server, database, username, password):
         connection_string = (
             f"DRIVER={{ODBC Driver 18 for SQL Server}};"
             f"SERVER={server};"
-            f"DATABASE={database};"  # Include the database name
+            f"DATABASE={database};"
             f"UID={username};"
             f"PWD={password};"
             f"TrustServerCertificate=yes;"
@@ -14,8 +14,9 @@ def get_connection(server, database, username, password):
         connection = pyodbc.connect(connection_string)
         return connection
     except pyodbc.Error as e:
-        print(f"Error connecting to the database: {e}")
-        raise
+        error_message = f"Error connecting to the database: {e}"
+        print(error_message)
+        raise Exception(error_message)
 
 # PostgreSQL connection
 

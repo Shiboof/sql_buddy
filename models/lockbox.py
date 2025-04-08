@@ -1,5 +1,7 @@
 class Lockbox:
     def __init__(self, serial_number, location=None):
+        if not isinstance(serial_number, str) or not serial_number:
+            raise ValueError("Serial number must be a non-empty string.")
         self.serial_number = serial_number
         self.location = location
 

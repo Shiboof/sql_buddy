@@ -46,12 +46,15 @@ def process_csv(db_config, result_var):
         # Process each serial number and find its location
         locations = []
         for serial_number in data['LBSN']:
-            lockbox = Lockbox(serial_number)
-            location = lockbox.find_location(connection)
-            if location:
-                locations.append(f"{serial_number}: {location}")
-            else:
-                locations.append(f"{serial_number}: Not found")
+            try:
+                lockbox = Lockbox(serial_number)
+                location = lockbox.find_location(connection)
+                if location:
+                    locations.append(f"{serial_number}: {location}")
+                else:
+                    locations.append(f"{serial_number}: Not found")
+            except Exception as e:
+                locations.append(f"{serial_number}: Error - {e}")
 
         connection.close()
 
