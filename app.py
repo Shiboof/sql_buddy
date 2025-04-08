@@ -1,12 +1,12 @@
+from tkinter import Tk, Label, Entry, Button, StringVar, filedialog, Frame
 import os
 import sys
-from tkinter import Tk, Label, Entry, Button, StringVar, filedialog
 import pandas as pd
 from database.connection import get_connection
 from models.lockbox import Lockbox
 from models.owners import Owner
-import database.db_config as db_config  # Import the configuration file
-from utils.helpers import process_csv  # Import the refactored function
+import database.db_config as db_config
+from utils.helpers import process_csv
 from utils.driver_installer import check_and_install_odbc_driver
 import requests
 
@@ -15,26 +15,13 @@ if not check_and_install_odbc_driver():
     print("Failed to install ODBC Driver. Exiting...")
     sys.exit(1)
 
-def check_for_updates(current_version):
-    try:
-        response = requests.get("https://raw.githubusercontent.com/Shiboof/sql_buddy/refs/heads/main/version.json")
-        if response.status_code == 200:
-            version_data = response.json()
-            latest_version = version_data.get("version")
-            download_url = version_data.get("download_url")
-            changelog = version_data.get("changelog", [])
-
-            if latest_version != current_version:
-                print(f"Update available: {latest_version}")
-                print(f"Download it here: {download_url}")
-                print(f"Changelog: {changelog}")
-                # Prompt user to update
-            else:
-                print("You are using the latest version.")
-        else:
-            print("Failed to check for updates.")
-    except Exception as e:
-        print(f"Error checking for updates: {e}")
+def center_window(window, width, height):
+    """Center the window on the screen."""
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+    x = (screen_width // 2) - (width // 2)
+    y = (screen_height // 2) - (height // 2)
+    window.geometry(f"{width}x{height}+{x}+{y}")
 
 def find_location_gui():
     # Get the serial number from the input field
@@ -103,6 +90,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Create the main GUI window
 root = Tk()
 root.title("Lockbox Finder")
+root.configure(bg="#f0f0f0")  # Set background color
+center_window(root, 400, 300)  # Center the window
 
 # Force the window to open in the foreground
 root.attributes('-topmost', True)
@@ -116,23 +105,23 @@ if os.path.exists(icon_path):
 else:
     print(f"Icon file not found at {icon_path}. Using default icon.")
 
+# Create a frame for the input and buttons
+frame = Frame(root, bg="#f0f0f0")
+frame.pack(pady=20)
+
 # Input field for serial number
-Label(root, text="Enter Lockbox Serial Number:").grid(row=0, column=0, padx=10, pady=10)
+Label(frame, text="Enter Lockbox Serial Number or User ID:", font=("Arial", 12), bg="#f0f0f0").grid(row=0, column=0, columnspan=2, pady=5)
 serial_number_var = StringVar()
-Entry(root, textvariable=serial_number_var).grid(row=0, column=1, padx=10, pady=10)
+Entry(frame, textvariable=serial_number_var, font=("Arial", 12), width=30).grid(row=1, column=0, columnspan=2, pady=5)
 
-# Button to find the location
-Button(root, text="Find Location", command=find_location_gui).grid(row=1, column=0, columnspan=2, pady=10)
-
-# Button to find the owner and lockboxes
-Button(root, text="Find Owner", command=find_owner_gui).grid(row=2, column=0, columnspan=2, pady=10)
-
-# Button to upload and process CSV
-Button(root, text="Upload CSV", command=lambda: process_csv(db_config, result_var)).grid(row=3, column=0, columnspan=2, pady=10)
+# Buttons
+Button(frame, text="Find Location", command=find_location_gui, font=("Arial", 10), bg="#0078D7", fg="white").grid(row=2, column=0, padx=5, pady=10)
+Button(frame, text="Find Owner", command=find_owner_gui, font=("Arial", 10), bg="#0078D7", fg="white").grid(row=2, column=1, padx=5, pady=10)
+Button(frame, text="Upload CSV", command=lambda: process_csv(db_config, result_var), font=("Arial", 10), bg="#0078D7", fg="white").grid(row=3, column=0, columnspan=2, pady=10)
 
 # Label to display the result
 result_var = StringVar()
-Label(root, textvariable=result_var, wraplength=300).grid(row=4, column=0, columnspan=2, padx=10, pady=10)
+Label(root, textvariable=result_var, wraplength=350, font=("Arial", 10), bg="#f0f0f0", fg="black").pack(pady=10)
 
 # Run the GUI event loop
 root.mainloop()
