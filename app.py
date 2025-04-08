@@ -1,4 +1,4 @@
-from tkinter import Tk, Label, Entry, Button, StringVar, filedialog, Frame
+from tkinter import Tk, Label, Entry, Button, StringVar, filedialog, Frame, messagebox
 import os
 import sys
 import pandas as pd
@@ -10,6 +10,48 @@ from utils.helpers import process_csv
 from utils.driver_installer import check_and_install_odbc_driver
 import requests
 from models.ez_sql import open_ez_sql_window
+import json
+
+def get_current_version():
+    """Read the current version from version.json."""
+    version_file_path = os.path.join(BASE_DIR, "version.json")
+    try:
+        with open(version_file_path, "r") as version_file:
+            version_data = json.load(version_file)
+            return version_data.get("version", "0.0.0")  # Default to "0.0.0" if version is missing
+    except FileNotFoundError:
+        print("version.json not found. Defaulting to version 0.0.0.")
+        return "0.0.0"
+    except json.JSONDecodeError:
+        print("Error decoding version.json. Defaulting to version 0.0.0.")
+        return "0.0.0"
+
+def check_for_updates():
+    """Check GitHub for the latest version of the app."""
+    current_version = get_current_version()
+    repo_owner = "shiboof"  # Replace with your GitHub username
+    repo_name = "sql_buddy"  # Replace with your repository name
+    api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
+
+    try:
+        response = requests.get(api_url, timeout=10)
+        response.raise_for_status()  # Raise an error for bad HTTP responses
+        latest_release = response.json()
+        latest_version = latest_release["tag_name"].lstrip("v")  # Remove 'v' prefix if present
+        download_url = latest_release.get("html_url", "https://github.com")
+
+        if latest_version != current_version:
+            changelog = latest_release.get("body", "No changelog available.")
+            messagebox.showinfo(
+                "Update Available",
+                f"A new version ({latest_version}) is available!\n\n"
+                f"Changelog:\n{changelog}\n\n"
+                f"Visit {download_url} to download the latest version."
+            )
+        else:
+            print("You are using the latest version of the app.")
+    except requests.RequestException as e:
+        print(f"Error checking for updates: {e}")
 
 # Check and install ODBC driver if necessary
 if not check_and_install_odbc_driver():
@@ -92,6 +134,9 @@ def find_owner_gui():
 
 # Get the directory of the current script
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Check for updates
+check_for_updates()
 
 # Create the main GUI window
 root = Tk()
