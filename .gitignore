@@ -1,3 +1,26 @@
-/venv
-/database/db_config.py
-/__pycache__/
+# Virtual environment
+/venv/
+
+# Compiled Python files
+__pycache__/
+*.pyc
+*.pyo
+
+# PyInstaller build files
+/dist/
+build/
+*.spec
+
+# Database configuration (contains sensitive credentials)
+database/db_config.py
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# CSV or other temporary data files
+*.csv
+
+# IDE-specific files
+.vscode/
+.idea/
