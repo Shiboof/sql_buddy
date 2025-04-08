@@ -1,9 +1,12 @@
 import os
 import subprocess
 import sys
-import urllib.request
+import winreg
 
 def check_and_install_odbc_driver():
+    """
+    Checks if ODBC Driver 18 for SQL Server is installed. If not, installs it from a local file.
+    """
     try:
         # Check if any ODBC Driver for SQL Server is installed
         import pyodbc
@@ -15,56 +18,46 @@ def check_and_install_odbc_driver():
             print("ODBC Driver 18 for SQL Server is already installed.")
             return True
 
-        # Check for older versions of the ODBC Driver
-        older_versions = [driver for driver in drivers if "ODBC Driver" in driver and "18" not in driver]
-        if older_versions:
-            print(f"Older ODBC Drivers detected: {older_versions}")
-            print("Uninstalling older ODBC Drivers...")
-            for driver in older_versions:
-                uninstall_odbc_driver(driver)
+        # If ODBC Driver 18 is not installed, install it from the local file
+        print("ODBC Driver 18 for SQL Server not found. Installing from local file...")
 
-        # If ODBC Driver 18 is not installed, download and install it
-        print("ODBC Driver 18 for SQL Server not found. Downloading and installing...")
+        # Determine the base directory
+        if getattr(sys, 'frozen', False):  # If running as a PyInstaller bundle
+            base_dir = sys._MEIPASS
+        else:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
 
-        # URL for the ODBC Driver 18 for SQL Server installer (64-bit)
-        driver_url = "https://go.microsoft.com/fwlink/?linkid=2307162"  # Direct link to the installer
-        installer_path = os.path.join(os.getcwd(), "msodbcsql.msi")
+        # Path to the local installer
+        installer_path = os.path.join(base_dir, "drivers", "msodbcsql.msi")
+        print(f"Resolved installer path: {installer_path}")
 
-        # Download the installer
-        print(f"Downloading ODBC Driver installer from {driver_url}...")
-        urllib.request.urlretrieve(driver_url, installer_path)
-        print(f"Downloaded installer to {installer_path}")
-
-        # Verify the installer file exists and is not empty
-        if not os.path.exists(installer_path) or os.path.getsize(installer_path) == 0:
-            print("Downloaded installer is invalid or empty.")
+        # Verify the installer file exists
+        if not os.path.exists(installer_path):
+            print(f"Installer file not found at {installer_path}.")
             return False
 
         # Run the installer
-        print("Running the installer...")
+        log_path = os.path.join(os.getcwd(), "install.log")
+        print(f"Running the installer from {installer_path}...")
         result = subprocess.run(
-            ["msiexec", "/i", installer_path, "/quiet", "/norestart"],
+            f'msiexec /i "{installer_path}" /qf /norestart',
             check=False,
             capture_output=True,
-            text=True
+            text=True,
+            shell=True
         )
+
 
         # Check the result of the installation
         if result.returncode != 0:
             print(f"Installer failed with return code {result.returncode}")
             print(f"Installer stdout: {result.stdout}")
             print(f"Installer stderr: {result.stderr}")
+            print(f"Check the log file for details: {log_path}")
             return False
 
         print("ODBC Driver 18 for SQL Server installed successfully.")
-
-        # Clean up the installer file
-        os.remove(installer_path)
-        print("Installer file deleted.")
         return True
-    except subprocess.CalledProcessError as e:
-        print(f"Error during ODBC Driver installation: {e}")
-        return False
     except Exception as e:
         print(f"Unexpected error: {e}")
         return False
@@ -72,14 +65,44 @@ def check_and_install_odbc_driver():
 
 def uninstall_odbc_driver(driver_name):
     """
-    Uninstall the specified ODBC driver using the Windows registry and msiexec.
+    Uninstall the specified ODBC driver by finding its uninstall string in the Windows registry.
     """
     try:
         print(f"Attempting to uninstall {driver_name}...")
-        # Use the Windows registry to find the uninstall string for the driver
-        uninstall_command = f"msiexec /x {driver_name} /quiet /norestart"
+
+        # Registry paths to search for uninstall strings
+        registry_paths = [
+            r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+            r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+        ]
+
+        uninstall_string = None
+
+        # Search the registry for the uninstall string
+        for reg_path in registry_paths:
+            try:
+                with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, reg_path) as key:
+                    for i in range(winreg.QueryInfoKey(key)[0]):  # Iterate through subkeys
+                        subkey_name = winreg.EnumKey(key, i)
+                        with winreg.OpenKey(key, subkey_name) as subkey:
+                            try:
+                                display_name = winreg.QueryValueEx(subkey, "DisplayName")[0]
+                                if driver_name in display_name:
+                                    uninstall_string = winreg.QueryValueEx(subkey, "UninstallString")[0]
+                                    break
+                            except FileNotFoundError:
+                                continue
+            except FileNotFoundError:
+                continue
+
+        if not uninstall_string:
+            print(f"Uninstall string for {driver_name} not found in the registry.")
+            return False
+
+        # Run the uninstall command
+        print(f"Uninstalling {driver_name} using: {uninstall_string}")
         result = subprocess.run(
-            uninstall_command,
+            uninstall_string.split(),
             check=False,
             capture_output=True,
             text=True,
@@ -90,7 +113,10 @@ def uninstall_odbc_driver(driver_name):
             print(f"Failed to uninstall {driver_name}. Return code: {result.returncode}")
             print(f"Uninstall stdout: {result.stdout}")
             print(f"Uninstall stderr: {result.stderr}")
+            return False
         else:
             print(f"Successfully uninstalled {driver_name}.")
+            return True
     except Exception as e:
         print(f"Error uninstalling {driver_name}: {e}")
+        return False
