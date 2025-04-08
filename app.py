@@ -73,7 +73,7 @@ def find_owner_gui():
     serial_number = None
 
     # Treat all inputs as strings to avoid overflow errors
-    if input_value.isdigit() and len(input_value) <= 10:  # Adjust length as per your user_id format
+    if input_value.isdigit() and len(input_value) < 7:  # Adjust length as per your user_id format
         user_id = input_value  # Treat as user_id
     else:
         serial_number = input_value  # Treat as serial_number
