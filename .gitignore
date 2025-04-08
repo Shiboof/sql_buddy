@@ -9,6 +9,7 @@ __pycache__/
 # PyInstaller build files
 build/
 *.spec
+assets/
 
 # Database configuration (contains sensitive credentials)
 database/db_config.py
@@ -26,3 +27,6 @@ database/db_config.py
 
 # Driver installer
 /drivers/msodbcsql.msi
+
+# gitignore file for the project
+.gitignore

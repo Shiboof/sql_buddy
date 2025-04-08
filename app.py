@@ -1,3 +1,5 @@
+import os
+import sys
 from tkinter import Tk, Label, Entry, Button, StringVar, filedialog
 import pandas as pd
 from database.connection import get_connection
@@ -9,7 +11,7 @@ from utils.driver_installer import check_and_install_odbc_driver
 # Check and install ODBC driver if necessary
 if not check_and_install_odbc_driver():
     print("Failed to install ODBC Driver. Exiting...")
-    exit(1)
+    sys.exit(1)
 
 def find_location_gui():
     # Get the serial number from the input field
@@ -38,9 +40,19 @@ def find_location_gui():
     except Exception as e:
         result_var.set(f"Error: {e}")
 
+# Get the directory of the current script
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # Create the main GUI window
 root = Tk()
 root.title("Lockbox Finder")
+
+# Set the Window Icon
+icon_path = os.path.join(BASE_DIR, "assets", "app_icon.ico")
+if os.path.exists(icon_path):
+    root.iconbitmap(icon_path)
+else:
+    print(f"Icon file not found at {icon_path}. Using default icon.")
 
 # Input field for serial number
 Label(root, text="Enter Lockbox Serial Number:").grid(row=0, column=0, padx=10, pady=10)
