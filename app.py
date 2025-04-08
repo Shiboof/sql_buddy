@@ -7,11 +7,28 @@ from models.lockbox import Lockbox
 import database.db_config as db_config  # Import the configuration file
 from utils.helpers import process_csv  # Import the refactored function
 from utils.driver_installer import check_and_install_odbc_driver
+import requests
 
 # Check and install ODBC driver if necessary
 if not check_and_install_odbc_driver():
     print("Failed to install ODBC Driver. Exiting...")
     sys.exit(1)
+
+def check_for_updates(current_version):
+    try:
+        response = requests.get("https://github.com/Shiboof/sql_buddy/blob/main/version.json")
+        if response.status_code == 200:
+            latest_version = response.json().get("version")
+            download_url = response.json().get("download_url")
+            if latest_version != current_version:
+                print(f"Update available: {latest_version}")
+                print(f"Download it here: {download_url}")
+            else:
+                print("You are using the latest version.")
+        else:
+            print("Failed to check for updates.")
+    except Exception as e:
+        print(f"Error checking for updates: {e}")
 
 def find_location_gui():
     # Get the serial number from the input field
