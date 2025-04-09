@@ -12,11 +12,11 @@ lockbox-locator
 │   │   └── connection.py     # Manages database connection
 │   ├── models
 │   │   └── lockbox.py        # Defines the Lockbox entity
-|   |   └── owners.py
-|   |   └── ez_sql.py
+|   |   └── owners.py         # Manages Owner class
+|   |   └── ez_sql.py         # Manages ez_SQL function
 │   └── utils
-│       └── helpers.py        # Utility functions for the 
-|       └── driver_installer.py
+│       └── helpers.py        # Utility functions for the processing of csv's
+|       └── driver_installer.py # Downloads ODBC Driver for SQL if not found
 application
 ├── requirements.txt          # Lists project dependencies
 └── README.md                 # Documentation for the project
