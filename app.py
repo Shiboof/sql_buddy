@@ -1,4 +1,4 @@
-from tkinter import Tk, Label, Entry, Button, StringVar, filedialog, Frame, messagebox, Scrollbar, Text
+import customtkinter as ctk
 import os
 import sys
 import pandas as pd
@@ -11,47 +11,69 @@ from utils.driver_installer import check_and_install_odbc_driver
 import requests
 from models.ez_sql import open_ez_sql_window
 import json
+from tkinter import filedialog, Tk  # Import Tk explicitly
 
-def get_current_version():
-    """Read the current version from version.json."""
-    version_file_path = os.path.join(BASE_DIR, "version.json")
-    try:
-        with open(version_file_path, "r") as version_file:
-            version_data = json.load(version_file)
-            return version_data.get("version", "0.0.0")  # Default to "0.0.0" if version is missing
-    except FileNotFoundError:
-        print("version.json not found. Defaulting to version 0.0.0.")
-        return "0.0.0"
-    except json.JSONDecodeError:
-        print("Error decoding version.json. Defaulting to version 0.0.0.")
-        return "0.0.0"
+# Define constants for the GitHub API URL and current version
+GITHUB_API_URL = "https://api.github.com/repos/shiboof/sql_buddy/releases/latest"
+CURRENT_VERSION = "v1.1.3"  # Replace with your current version
+
+# Set the default appearance mode
+ctk.set_appearance_mode("light")  # Default to light mode
+ctk.set_default_color_theme("blue")  # Use the blue color theme
+
+# Global variable for dark mode state
+is_dark_mode = False
+
+def toggle_dark_mode():
+    """Toggle between light and dark mode."""
+    global is_dark_mode
+    is_dark_mode = not is_dark_mode
+
+    # Define light and dark mode colors
+    if is_dark_mode:
+        ctk.set_appearance_mode("dark")  # Set customtkinter to dark mode
+    else:
+        ctk.set_appearance_mode("light")  # Set customtkinter to light mode
+
+def show_ctk_messagebox(root, title, message, message_type="info"):
+    """Custom message box using customtkinter."""
+    # Create a Toplevel window tied to the main root window
+    dialog = ctk.CTkToplevel(root)  # Pass the root window explicitly
+    dialog.title(title)
+    dialog.geometry("400x200")
+    dialog.resizable(False, False)
+
+    # Add message label
+    label = ctk.CTkLabel(dialog, text=message, font=("Helvetica", 14), wraplength=350)
+    label.pack(pady=20, padx=20)
+
+    # Add OK button
+    ok_button = ctk.CTkButton(dialog, text="OK", command=dialog.destroy, fg_color="blue", hover_color="darkblue")
+    ok_button.pack(pady=10)
+
+    # Make the dialog modal
+    dialog.grab_set()
+    dialog.wait_window(dialog)  # Ensure the window is destroyed after closing
 
 def check_for_updates():
-    """Check GitHub for the latest version of the app."""
-    current_version = get_current_version()
-    repo_owner = "shiboof"  # Replace with your GitHub username
-    repo_name = "sql_buddy"  # Replace with your repository name
-    api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
-
+    """Check GitHub for the latest release version."""
     try:
-        response = requests.get(api_url, timeout=10)
-        response.raise_for_status()  # Raise an error for bad HTTP responses
+        response = requests.get(GITHUB_API_URL, timeout=5)
+        response.raise_for_status()
         latest_release = response.json()
-        latest_version = latest_release["tag_name"].lstrip("v")  # Remove 'v' prefix if present
-        download_url = latest_release.get("html_url", "https://github.com")
+        latest_version = latest_release.get("tag_name", "0.0.0")
 
-        if latest_version != current_version:
-            changelog = latest_release.get("body", "No changelog available.")
-            messagebox.showinfo(
-                "Update Available",
-                f"A new version ({latest_version}) is available!\n\n"
-                f"Changelog:\n{changelog}\n\n"
-                f"Visit {download_url} to download the latest version."
+        if latest_version > CURRENT_VERSION:
+            message = (
+                f"A new version ({latest_version}) is available!\n"
+                f"Please update your application.\n\n"
+                f"Visit\nhttps://github.com/Shiboof/sql_buddy/releases\n to download the latest version."
             )
+            show_ctk_messagebox(root, "Update Available", message)
         else:
-            print("You are using the latest version of the app.")
+            show_ctk_messagebox(root, "Up-to-Date", "You are using the latest version.")
     except requests.RequestException as e:
-        print(f"Error checking for updates: {e}")
+        show_ctk_messagebox(root, "Update Check Failed", f"Could not check for updates: {e}", message_type="error")
 
 # Check and install ODBC driver if necessary
 if not check_and_install_odbc_driver():
@@ -137,8 +159,12 @@ def save_output_to_csv():
     # Get the current output from the Text widget
     output = result_text.get("1.0", "end").strip()  # Get all text and strip trailing newline
     if not output:
-        messagebox.showinfo("Save to CSV", "No output to save.")
+        show_ctk_messagebox(root, "Save to CSV", "No output to save.")
         return
+
+    # Create a hidden Tk instance to avoid redundant windows
+    root_tk = Tk()
+    root_tk.withdraw()  # Hide the root window
 
     # Ask the user where to save the file
     file_path = filedialog.asksaveasfilename(
@@ -146,6 +172,8 @@ def save_output_to_csv():
         defaultextension=".csv",
         filetypes=(("CSV Files", "*.csv"), ("All Files", "*.*"))
     )
+    root_tk.destroy()  # Destroy the hidden Tk instance
+
     if not file_path:
         return  # User canceled the save dialog
 
@@ -157,27 +185,25 @@ def save_output_to_csv():
         df = pd.DataFrame(rows, columns=["Key", "Value"])
         df.to_csv(file_path, index=False)
 
-        messagebox.showinfo("Save to CSV", f"Output successfully saved to {file_path}.")
+        show_ctk_messagebox(root, "Save to CSV", f"Output successfully saved to {file_path}.")
     except Exception as e:
-        messagebox.showerror("Save to CSV", f"Error saving output to CSV: {e}")
-
+        show_ctk_messagebox(root, "Save to CSV", f"Error saving output to CSV: {e}", message_type="error")
 
 # Get the directory of the current script
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Check for updates
-check_for_updates()
-
 # Create the main GUI window
-root = Tk()
-root.title("Lockbox Finder")
-root.configure(bg="#f0f0f0")  # Set background color
-center_window(root, 500, 500)  # Center the window
+root = ctk.CTk()
+root.title("Lockbox Finder")  # Set background color
+center_window(root, 600, 500)  # Center the window
 
 # Force the window to open in the foreground
-root.attributes('-topmost', True)
-root.update()
-root.attributes('-topmost', False)
+# root.attributes('-topmost', True)
+# root.update()
+# root.attributes('-topmost', False)
+
+# Check for updates (after root is created)
+check_for_updates()
 
 # Set the Window Icon
 icon_path = os.path.join(BASE_DIR, "assets", "app_icon.ico")
@@ -186,32 +212,46 @@ if os.path.exists(icon_path):
 else:
     print(f"Icon file not found at {icon_path}. Using default icon.")
 
+# Add a dark mode toggle button
+dark_mode_button = ctk.CTkButton(
+    root,
+    text="Dark Mode",
+    command=toggle_dark_mode,
+    fg_color="#0078D7",
+    text_color="white",
+    hover_color="#005BB5",
+    width=100,
+    height=30,
+    corner_radius=15
+)
+dark_mode_button.place(x=10, y=10)  # Position the button at the top left corner
+
 # Create a frame for the input and buttons
-frame = Frame(root, bg="#f0f0f0")
+frame = ctk.CTkFrame(root)
 frame.pack(pady=20)
 
 # Input field for serial number
-Label(frame, text="Enter Lockbox Serial Number or User ID:", font=("Arial", 12), bg="#f0f0f0").grid(row=0, column=0, columnspan=2, pady=5)
-serial_number_var = StringVar()
-Entry(frame, textvariable=serial_number_var, font=("Arial", 12), width=30).grid(row=1, column=0, columnspan=2, pady=5)
+ctk.CTkLabel(frame, text="Enter Lockbox Serial Number or User ID:", font=("Arial", 12)).grid(row=0, column=0, columnspan=2, pady=5)
+serial_number_var = ctk.StringVar()
+ctk.CTkEntry(frame, textvariable=serial_number_var, font=("Arial", 12), width=300).grid(row=1, column=0, columnspan=2, pady=5)
 
 # Buttons
-Button(frame, text="Find Location", command=find_location_gui, font=("Arial", 10), bg="#0078D7", fg="white").grid(row=2, column=0, padx=5, pady=10)
-Button(frame, text="Find Owner", command=find_owner_gui, font=("Arial", 10), bg="#0078D7", fg="white").grid(row=2, column=1, padx=5, pady=10)
-Button(frame, text="Upload CSV", command=lambda: process_csv(db_config, result_var), font=("Arial", 10), bg="#0078D7", fg="white").grid(row=3, column=0, columnspan=2, pady=10)
-Button(frame, text="EZ-SQL", command=lambda: open_ez_sql_window(root), font=("Arial", 10), bg="#0078D7", fg="white").grid(row=4, column=0, columnspan=2, pady=10)
-Button(frame, text="Save to CSV", command=save_output_to_csv, font=("Arial", 10), bg="#0078D7", fg="white").grid(row=5, column=0, columnspan=2, pady=10)
+ctk.CTkButton(frame, text="Find Location", command=find_location_gui, font=("Arial", 10), fg_color="#0078D7", text_color="white").grid(row=2, column=0, padx=5, pady=10)
+ctk.CTkButton(frame, text="Find Owner", command=find_owner_gui, font=("Arial", 10), fg_color="#0078D7", text_color="white").grid(row=2, column=1, padx=5, pady=10)
+ctk.CTkButton(frame, text="Upload CSV", command=lambda: process_csv(db_config, result_text), font=("Arial", 10), fg_color="#0078D7", text_color="white").grid(row=3, column=0, columnspan=2, pady=10)
+ctk.CTkButton(frame, text="EZ-SQL", command=lambda: open_ez_sql_window(root), font=("Arial", 10), fg_color="#0078D7", text_color="white").grid(row=4, column=0, columnspan=2, pady=10)
+ctk.CTkButton(frame, text="Save to CSV", command=save_output_to_csv, font=("Arial", 10), fg_color="#0078D7", text_color="white").grid(row=5, column=0, columnspan=2, pady=10)
 
 # Create a frame for the output box and scrollbar
-output_frame = Frame(root, bg="#f0f0f0")
+output_frame = ctk.CTkFrame(root)
 output_frame.pack(pady=10, padx=10)
 
 # Create the output box (Text widget)
-result_text = Text(output_frame, wrap="word", font=("Arial", 10), width=50, height=15)
+result_text = ctk.CTkTextbox(output_frame, wrap="word", font=("Arial", 10), width=500, height=300)
 result_text.grid(row=0, column=0, sticky="nsew")
 
 # Create the scrollbar
-scrollbar = Scrollbar(output_frame, orient="vertical", command=result_text.yview)
+scrollbar = ctk.CTkScrollbar(output_frame, orientation="vertical", command=result_text.yview)
 scrollbar.grid(row=0, column=1, sticky="ns")
 
 # Link the scrollbar to the output box

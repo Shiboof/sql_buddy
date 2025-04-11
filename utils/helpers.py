@@ -1,7 +1,8 @@
 import pandas as pd
-from tkinter import filedialog
+from tkinter import filedialog, Tk  # Explicitly import filedialog and Tk to avoid redundant Tk windows
 from models.lockbox import Lockbox
 from database.connection import get_connection
+import customtkinter as ctk  # Import CustomTkinter
 
 def validate_serial_number(serial_number):
     if not isinstance(serial_number, str):
@@ -17,11 +18,18 @@ def format_output(lockbox_location):
         return "Lockbox not found."
     
 def process_csv(db_config, result_var):
+    """Process a CSV file and find lockbox locations."""
+    # Create a hidden Tk instance to avoid redundant windows
+    root = Tk()
+    root.withdraw()  # Hide the root window
+
     # Open a file dialog to select the CSV file
     file_path = filedialog.askopenfilename(
         title="Select CSV File",
         filetypes=(("CSV Files", "*.csv"), ("All Files", "*.*"))
     )
+    root.destroy()  # Destroy the hidden Tk instance
+
     if not file_path:
         result_var.set("No file selected.")
         return

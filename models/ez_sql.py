@@ -1,49 +1,47 @@
-from tkinter import Toplevel, OptionMenu, Text, Label, Entry, Button, StringVar, messagebox
+import customtkinter as ctk
 from database.connection import get_connection
 import database.db_config as db_config
 
 def open_ez_sql_window(root):
     """Open the EZ-SQL window for dynamic query building."""
-    ez_sql_window = Toplevel(root)
+    ez_sql_window = ctk.CTkToplevel(root)
     ez_sql_window.title("EZ-SQL")
     ez_sql_window.geometry("800x600")
-    ez_sql_window.configure(bg="#f0f0f0")
 
     # Labels
-    Label(ez_sql_window, text="Select Table:", font=("Arial", 12), bg="#f0f0f0").grid(row=0, column=0, padx=10, pady=10, sticky="w")
-    Label(ez_sql_window, text="Select Column:", font=("Arial", 12), bg="#f0f0f0").grid(row=1, column=0, padx=10, pady=10, sticky="w")
-    Label(ez_sql_window, text="Filter by Column (Optional):", font=("Arial", 12), bg="#f0f0f0").grid(row=2, column=0, padx=10, pady=10, sticky="w")
-    Label(ez_sql_window, text="Value for Filter (Optional):", font=("Arial", 12), bg="#f0f0f0").grid(row=3, column=0, padx=10, pady=10, sticky="w")
-
+    ctk.CTkLabel(ez_sql_window, text="Select Table:", font=("Arial", 12)).grid(row=0, column=0, padx=10, pady=10, sticky="w")
+    ctk.CTkLabel(ez_sql_window, text="Select Column:", font=("Arial", 12)).grid(row=1, column=0, padx=10, pady=10, sticky="w")
+    ctk.CTkLabel(ez_sql_window, text="Filter by Column (Optional):", font=("Arial", 12)).grid(row=2, column=0, padx=10, pady=10, sticky="w")
+    ctk.CTkLabel(ez_sql_window, text="Value for Filter (Optional):", font=("Arial", 12)).grid(row=3, column=0, padx=10, pady=10, sticky="w")
+    
     # Dropdowns and input fields
-    table_var = StringVar(ez_sql_window)
-    column_var = StringVar(ez_sql_window)
-    where_column_var = StringVar(ez_sql_window)
-    where_value_var = StringVar(ez_sql_window)
+    table_var = ctk.StringVar(ez_sql_window)
+    column_var = ctk.StringVar(ez_sql_window)
+    where_column_var = ctk.StringVar(ez_sql_window)
+    where_value_var = ctk.StringVar(ez_sql_window)
 
     # Fetch tables dynamically
     tables = fetch_tables()
     if not tables:
-        messagebox.showerror("Error", "No tables found in the database.")
-        ez_sql_window.destroy()
+        ctk.CTkLabel(ez_sql_window, text="No tables found in the database.", font=("Arial", 12), text_color="red").grid(row=0, column=1, padx=10, pady=10)
         return
 
     table_var.set(tables[0])  # Set default value
-    OptionMenu(ez_sql_window, table_var, *tables).grid(row=0, column=1, padx=10, pady=10)
+    ctk.CTkOptionMenu(ez_sql_window, variable=table_var, values=tables).grid(row=0, column=1, padx=10, pady=10)
 
     # Fetch columns for the selected table
     columns = fetch_columns(tables[0])
     column_var.set(columns[0])  # Set default value
-    column_menu = OptionMenu(ez_sql_window, column_var, *columns)
+    column_menu = ctk.CTkOptionMenu(ez_sql_window, variable=column_var, values=columns)
     column_menu.grid(row=1, column=1, padx=10, pady=10)
 
     # Dropdown for WHERE clause column
     where_column_var.set(columns[0])  # Set default value
-    where_column_menu = OptionMenu(ez_sql_window, where_column_var, *columns)
+    where_column_menu = ctk.CTkOptionMenu(ez_sql_window, variable=where_column_var, values=columns)
     where_column_menu.grid(row=2, column=1, padx=10, pady=10)
 
     # Input field for WHERE clause value
-    Entry(ez_sql_window, textvariable=where_value_var, font=("Arial", 12), width=30).grid(row=3, column=1, padx=10, pady=10)
+    ctk.CTkEntry(ez_sql_window, textvariable=where_value_var, font=("Arial", 12), width=300).grid(row=3, column=1, padx=10, pady=10)
 
     # Update columns when the table changes
     def update_columns(*args):
@@ -51,16 +49,13 @@ def open_ez_sql_window(root):
         new_columns = fetch_columns(selected_table)
         column_var.set(new_columns[0])  # Update default column
         where_column_var.set(new_columns[0])  # Update default WHERE column
-        column_menu["menu"].delete(0, "end")
-        where_column_menu["menu"].delete(0, "end")
-        for col in new_columns:
-            column_menu["menu"].add_command(label=col, command=lambda value=col: column_var.set(value))
-            where_column_menu["menu"].add_command(label=col, command=lambda value=col: where_column_var.set(value))
+        column_menu.configure(values=new_columns)
+        where_column_menu.configure(values=new_columns)
 
     table_var.trace("w", update_columns)
 
     # Text box for query results
-    result_text = Text(ez_sql_window, font=("Arial", 10), width=90, height=20)
+    result_text = ctk.CTkTextbox(ez_sql_window, font=("Arial", 10), width=700, height=300)
     result_text.grid(row=5, column=0, columnspan=2, padx=10, pady=10)
 
     # Execute query function
@@ -101,7 +96,11 @@ def open_ez_sql_window(root):
             result_text.insert("end", f"Error executing query: {e}")
 
     # Execute button
-    Button(ez_sql_window, text="Execute Query", command=execute_query, font=("Arial", 10), bg="#0078D7", fg="white").grid(row=4, column=0, columnspan=2, pady=10)
+    ctk.CTkButton(ez_sql_window, text="Execute Query", command=execute_query, font=("Arial", 10), fg_color="#0078D7", text_color="white").grid(row=4, column=0, columnspan=2, pady=10)
+
+    # Make the EZ-SQL window model
+    ez_sql_window.grab_set()
+    ez_sql_window.wait_window()
 
 def fetch_tables():
     """Fetch the list of tables from the database."""

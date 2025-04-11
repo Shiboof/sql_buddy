@@ -1,1 +1,0 @@
-pyinstaller --clean --noconsole --onefile --add-data "drivers/msodbcsql.msi;drivers" --icon=assets/app_icon.ico app.py
