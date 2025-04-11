@@ -1,7 +1,7 @@
 # Lockbox Locator
 
 ## Overview
-The Lockbox Locator is a Python application that allows users to input a lockbox's serial number and queries an existing SQL database to find its location. This application is designed to streamline the process of locating lockboxes based on their unique serial numbers.
+The SQL Buddy is a Python application that allows users to input a lockbox's serial number and queries an existing SQL database to find its location. This application is designed to streamline the process of locating lockboxes based on their unique serial numbers.
 
 ## Project Structure
 ```
